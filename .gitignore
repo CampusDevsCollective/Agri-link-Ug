@@ -1,0 +1,22 @@
+# PHP / backend
+vendor/
+composer.phar
+backend/config/database.php
+*.log
+
+# Frontend
+frontend/node_modules/
+frontend/.env
+
+# Editor / OS
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Env & secrets
+.env
+.env.local
+*.pem
+
+# Database dumps you don't want committed
+*.sql.bak
