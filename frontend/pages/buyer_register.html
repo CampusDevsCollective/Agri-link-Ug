@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Buyer Registration</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header><h1>AgriLink Uganda</h1></header>
+<nav>
+    <a href="index.html">Home</a>
+    <a href="buyer_requirement.html">Post Requirement</a>
+</nav>
+<main>
+    <h2>Buyer Registration</h2>
+    <form id="buyerForm">
+        <label>Full Name</label>
+        <input type="text" id="full_name" required>
+
+        <label>Phone Number</label>
+        <input type="text" id="phone_number" required>
+
+        <label>Password</label>
+        <input type="password" id="password" required>
+
+        <label>District ID</label>
+        <input type="number" id="district_id" required>
+
+        <label>Business Name (optional)</label>
+        <input type="text" id="business_name">
+
+        <label>Buyer Type</label>
+        <select id="buyer_type">
+            <option value="trader">Trader</option>
+            <option value="processor">Processor</option>
+            <option value="institution">Institution</option>
+            <option value="exporter">Exporter</option>
+            <option value="other">Other</option>
+        </select>
+
+        <button type="submit">Register</button>
+    </form>
+    <div id="msg" class="message" style="display:none;"></div>
+</main>
+
+<script src="../js/api.js"></script>
+<script>
+document.getElementById("buyerForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById("msg");
+    try {
+        const data = await apiPost("register_buyer.php", {
+            full_name: document.getElementById("full_name").value,
+            phone_number: document.getElementById("phone_number").value,
+            password: document.getElementById("password").value,
+            district_id: parseInt(document.getElementById("district_id").value),
+            business_name: document.getElementById("business_name").value,
+            buyer_type: document.getElementById("buyer_type").value
+        });
+        saveSession({
+            role: "buyer",
+            user_id: data.user_id,
+            buyer_id: data.buyer_id,
+            district_id: data.district_id
+        });
+        showMessage(msg, `Registered! Buyer ID: ${data.buyer_id}. Redirecting...`, "success");
+        setTimeout(() => window.location.href = "buyer_requirement.html", 1200);
+    } catch (err) {
+        showMessage(msg, err.message, "error");
+    }
+});
+</script>
+</body>
+</html>

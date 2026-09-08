@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Produce Listings</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header><h1>AgriLink Uganda</h1></header>
+<nav>
+    <a href="index.html">Home</a>
+    <a href="farmer_register.html">Register</a>
+</nav>
+<main>
+    <h2>Create Produce Listing</h2>
+    <form id="listingForm">
+        <label>Commodity ID</label>
+        <input type="number" id="commodity_id" required>
+
+        <label>Quantity Available (kg)</label>
+        <input type="number" step="0.1" id="quantity_available" required>
+
+        <label>Availability Date</label>
+        <input type="date" id="availability_date" required>
+
+        <label>Harvest Date (optional)</label>
+        <input type="date" id="harvest_date">
+
+        <label>Asking Price per Unit (optional)</label>
+        <input type="number" step="0.01" id="asking_price_per_unit">
+
+        <label>Pickup Location Note (optional)</label>
+        <input type="text" id="pickup_location_note">
+
+        <button type="submit">Create Listing</button>
+    </form>
+    <div id="msg" class="message" style="display:none;"></div>
+
+    <h2>My Listings</h2>
+    <table id="listingsTable">
+        <thead>
+            <tr><th>ID</th><th>Commodity</th><th>Qty</th><th>Status</th><th>Available From</th></tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</main>
+
+<script src="../js/api.js"></script>
+<script>
+const session = getSession();
+if (!session || session.role !== "farmer") {
+    alert("Please register as a farmer first.");
+    window.location.href = "farmer_register.html";
+}
+
+async function loadListings() {
+    const data = await apiGet("get_farmer_listings.php", { farmer_id: session.farmer_id });
+    const tbody = document.querySelector("#listingsTable tbody");
+    tbody.innerHTML = "";
+    data.listings.forEach(l => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${l.listing_id}</td><td>${l.commodity_id}</td><td>${l.quantity_available}</td><td>${l.status}</td><td>${l.availability_date}</td>`;
+        tbody.appendChild(row);
+    });
+}
+
+document.getElementById("listingForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById("msg");
+    try {
+        await apiPost("create_listing.php", {
+            farmer_id: session.farmer_id,
+            commodity_id: parseInt(document.getElementById("commodity_id").value),
+            quantity_available: document.getElementById("quantity_available").value,
+            availability_date: document.getElementById("availability_date").value,
+            harvest_date: document.getElementById("harvest_date").value || null,
+            asking_price_per_unit: document.getElementById("asking_price_per_unit").value || null,
+            pickup_location_note: document.getElementById("pickup_location_note").value || null
+        });
+        showMessage(msg, "Listing created!", "success");
+        document.getElementById("listingForm").reset();
+        loadListings();
+    } catch (err) {
+        showMessage(msg, err.message, "error");
+    }
+});
+
+loadListings();
+</script>
+</body>
+</html>

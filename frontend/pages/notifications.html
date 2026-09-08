@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Notifications</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header><h1>AgriLink Uganda</h1></header>
+<nav><a href="index.html">Home</a></nav>
+<main>
+    <h2>My Notifications</h2>
+    <table>
+        <thead><tr><th>Type</th><th>Message</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody id="notifBody"></tbody>
+    </table>
+</main>
+
+<script src="../js/api.js"></script>
+<script>
+const session = getSession();
+if (!session) {
+    alert("Please register first.");
+    window.location.href = "index.html";
+}
+
+async function loadNotifications() {
+    const data = await apiGet("get_notifications.php", { user_id: session.user_id });
+    const tbody = document.getElementById("notifBody");
+    tbody.innerHTML = "";
+    data.notifications.forEach(n => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${n.type}</td><td>${n.message}</td><td>${n.status}</td><td>${n.created_at}</td>`;
+        tbody.appendChild(row);
+    });
+}
+loadNotifications();
+</script>
+</body>
+</html>
