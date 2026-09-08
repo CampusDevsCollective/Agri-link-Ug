@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Farmer Registration</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header><h1>AgriLink Uganda</h1></header>
+<nav>
+    <a href="index.html">Home</a>
+    <a href="farmer_listing.html">My Listings</a>
+</nav>
+<main>
+    <h2>Farmer Registration</h2>
+    <form id="farmerForm">
+        <label>Full Name</label>
+        <input type="text" id="full_name" required>
+
+        <label>Phone Number</label>
+        <input type="text" id="phone_number" required>
+
+        <label>Password</label>
+        <input type="password" id="password" required>
+
+        <label>District ID</label>
+        <input type="number" id="district_id" required>
+
+        <label>Village (optional)</label>
+        <input type="text" id="village">
+
+        <label>Farm Size in Acres (optional)</label>
+        <input type="number" step="0.1" id="farm_size_acres">
+
+        <button type="submit">Register</button>
+    </form>
+    <div id="msg" class="message" style="display:none;"></div>
+</main>
+
+<script src="../js/api.js"></script>
+<script>
+document.getElementById("farmerForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById("msg");
+    try {
+        const data = await apiPost("register_farmer.php", {
+            full_name: document.getElementById("full_name").value,
+            phone_number: document.getElementById("phone_number").value,
+            password: document.getElementById("password").value,
+            district_id: parseInt(document.getElementById("district_id").value),
+            village: document.getElementById("village").value,
+            farm_size_acres: document.getElementById("farm_size_acres").value || null
+        });
+        saveSession({
+            role: "farmer",
+            user_id: data.user_id,
+            farmer_id: data.farmer_id,
+            district_id: data.district_id
+        });
+        showMessage(msg, `Registered! Farmer ID: ${data.farmer_id}. Redirecting...`, "success");
+        setTimeout(() => window.location.href = "farmer_listing.html", 1200);
+    } catch (err) {
+        showMessage(msg, err.message, "error");
+    }
+});
+</script>
+</body>
+</html>

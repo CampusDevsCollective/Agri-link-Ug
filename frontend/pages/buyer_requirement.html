@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Post Requirement</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header><h1>AgriLink Uganda</h1></header>
+<nav>
+    <a href="index.html">Home</a>
+    <a href="buyer_register.html">Register</a>
+</nav>
+<main>
+    <h2>Post a Requirement</h2>
+    <form id="requirementForm">
+        <label>Commodity ID</label>
+        <input type="number" id="commodity_id" required>
+
+        <label>Quantity Required (kg)</label>
+        <input type="number" step="0.1" id="quantity_required" required>
+
+        <label>Offered Price per Unit (optional)</label>
+        <input type="number" step="0.01" id="offered_price_per_unit">
+
+        <label>Collection Market ID (optional)</label>
+        <input type="number" id="collection_market_id">
+
+        <label>Collection Deadline (optional)</label>
+        <input type="date" id="collection_deadline">
+
+        <button type="submit">Post Requirement</button>
+    </form>
+    <div id="msg" class="message" style="display:none;"></div>
+    <div id="matchResult" class="message" style="display:none;"></div>
+</main>
+
+<script src="../js/api.js"></script>
+<script>
+const session = getSession();
+if (!session || session.role !== "buyer") {
+    alert("Please register as a buyer first.");
+    window.location.href = "buyer_register.html";
+}
+
+document.getElementById("requirementForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById("msg");
+    const matchResult = document.getElementById("matchResult");
+    matchResult.style.display = "none";
+
+    try {
+        const reqData = await apiPost("post_requirement.php", {
+            buyer_id: session.buyer_id,
+            commodity_id: parseInt(document.getElementById("commodity_id").value),
+            quantity_required: document.getElementById("quantity_required").value,
+            offered_price_per_unit: document.getElementById("offered_price_per_unit").value || null,
+            collection_market_id: document.getElementById("collection_market_id").value || null,
+            collection_deadline: document.getElementById("collection_deadline").value || null
+        });
+        showMessage(msg, `Requirement posted (ID: ${reqData.requirement_id}). Checking for matches...`, "success");
+
+        // Workflow 3: try a direct match
+        const matchData = await apiPost("run_matching.php", { requirement_id: reqData.requirement_id });
+
+        if (matchData.match_id) {
+            showMessage(matchResult, `Direct match found! Match ID: ${matchData.match_id}`, "success");
+        } else {
+            // Workflow 4: fall back to aggregation
+            const aggData = await apiPost("run_aggregation.php", { requirement_id: reqData.requirement_id });
+            if (aggData.aggregation_id) {
+                showMessage(matchResult, `No single farmer matched — aggregation proposed! Aggregation ID: ${aggData.aggregation_id}`, "success");
+            } else {
+                showMessage(matchResult, "No direct match or aggregation possible yet. Requirement stays open.", "error");
+            }
+        }
+
+        document.getElementById("requirementForm").reset();
+    } catch (err) {
+        showMessage(msg, err.message, "error");
+    }
+});
+</script>
+</body>
+</html>
